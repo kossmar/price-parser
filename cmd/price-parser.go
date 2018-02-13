@@ -43,68 +43,6 @@ type Coin struct {
 }
 
 var requestInput map[string]Coin
-
-func unmarshalJSON(url string){
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	error1 := json.Unmarshal(body, &requestInput)
-	if error1 != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
-func defaultInfo(coin string) {
-	coinName := requestInput[coin]
-	price, _ := strconv.ParseFloat(coinName.Last, 64)
-	fmt.Printf("%.5f\n", price)
-}
-
-func JSONInfo(coin string) {
-	jsonString, err := json.Marshal(requestInput[coin].Last)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(string(jsonString))
-}
-
-func verboseJSONInfo(coin string) {
-	jsonString, err := json.Marshal(requestInput[coin])
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(string(jsonString))
-}
-
-func verboseInfo(coin string) {
-
-	coinName := requestInput[coin]
-	val := reflect.ValueOf(coinName)
-
-	values := make([]interface{}, val.NumField())
-
-	fmt.Println("------ ", coin, " ------")
-
-	for i := 0; i < val.NumField(); i++ {
-		values[i] = val.Field(i).Interface()
-		fmt.Print(val.Type().Field(i).Name, ": ", values[i], "\n")
-	}
-
-	fmt.Println("------ $$$$$$$$ ------ \n")
-}
-
-func elapsedTime(start time.Time) {
-	timeElapsed := time.Since(start)
-	time := timeElapsed.Seconds()
-	fmt.Printf("%.1f seconds\n\n\n", time)
-}
-
 var cfgFile string
 var coinString string
 var Verbose bool
@@ -187,4 +125,69 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+
+
+// CUSTOM FUNCTIONS
+
+func unmarshalJSON(url string){
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	error1 := json.Unmarshal(body, &requestInput)
+	if error1 != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func defaultInfo(coin string) {
+	coinName := requestInput[coin]
+	price, _ := strconv.ParseFloat(coinName.Last, 64)
+	fmt.Printf("%.5f\n", price)
+}
+
+func JSONInfo(coin string) {
+	jsonString, err := json.Marshal(requestInput[coin].Last)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(jsonString))
+}
+
+func verboseJSONInfo(coin string) {
+	jsonString, err := json.Marshal(requestInput[coin])
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(jsonString))
+}
+
+func verboseInfo(coin string) {
+
+	coinName := requestInput[coin]
+	val := reflect.ValueOf(coinName)
+
+	values := make([]interface{}, val.NumField())
+
+	fmt.Println("------ ", coin, " ------")
+
+	for i := 0; i < val.NumField(); i++ {
+		values[i] = val.Field(i).Interface()
+		fmt.Print(val.Type().Field(i).Name, ": ", values[i], "\n")
+	}
+
+	fmt.Println("------ $$$$$$$$ ------ \n")
+}
+
+func elapsedTime(start time.Time) {
+	timeElapsed := time.Since(start)
+	time := timeElapsed.Seconds()
+	fmt.Printf("%.1f seconds\n\n\n", time)
 }
