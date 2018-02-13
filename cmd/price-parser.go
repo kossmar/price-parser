@@ -43,6 +43,12 @@ type Coin struct {
 }
 
 var requestInput map[string]Coin
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> ace2caf916648393edb8f7140216e6b819858e4f
 var cfgFile string
 var coinString string
 var Verbose bool
@@ -127,10 +133,13 @@ func initConfig() {
 	}
 }
 
+<<<<<<< HEAD
 
 
 // CUSTOM FUNCTIONS
 
+=======
+>>>>>>> ace2caf916648393edb8f7140216e6b819858e4f
 func unmarshalJSON(url string){
 	resp, err := http.Get(url)
 	if err != nil {
