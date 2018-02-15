@@ -23,6 +23,9 @@ import (
 	"reflect"
 	"encoding/json"
 	"strconv"
+	"bufio"
+	"log"
+
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -74,6 +77,30 @@ var rootCmd = &cobra.Command{
 				coinString = CoinName
 				fmt.Println(coinString)
 
+
+				// f, err := os.Create("/Users/spinkringle/Documents/datazz")
+				// if err != nil {
+				// 	fmt.Println("you fucked up")
+				// }
+
+				f, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+
+				defer f.Close()
+
+				f.Sync()
+				w := bufio.NewWriter(f)
+
+				_, err1 := w.WriteString(coinString + "\n")
+				if err1 != nil {
+					fmt.Println("you fucked up")
+				}
+				w.Flush()
+
+
 				switch {
 				case Verbose && !JSON:
 					verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
@@ -93,6 +120,13 @@ var rootCmd = &cobra.Command{
 				default:
 					defaultInfo := DefaultInfo(coinString, requestInput)
 					fmt.Printf("%.5f\n", defaultInfo)
+
+					stringThing := (FloatToString(defaultInfo)) + "\n\n"
+					_, err := w.WriteString(stringThing)
+					if err != nil {
+						fmt.Println("you fucked up")
+					}
+					w.Flush()
 				}
 
 				if Time == true {
@@ -202,6 +236,6 @@ func ElapsedTime(start time.Time) float64{
 	return time
 }
 
-func Add(a int) int {
-	return a + num
+func FloatToString(input_num float64) string {
+    return strconv.FormatFloat(input_num, 'f', 6, 64)
 }
