@@ -42,13 +42,9 @@ type Coin struct {
 	Low24hr       string `json: "low24hr"`
 }
 
-var requestInput map[string]Coin
-<<<<<<< HEAD
-=======
 
+var num = 5
 
-
->>>>>>> ace2caf916648393edb8f7140216e6b819858e4f
 var cfgFile string
 var coinString string
 var Verbose bool
@@ -63,29 +59,45 @@ var rootCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
 
 			url := "https://poloniex.com/public?command=returnTicker"
-
+			var requestInput map[string]Coin
 			for {
 				start := time.Now()
 				time.Sleep(time.Second * 5)
 
-				unmarshalJSON(url)
-
+				resp, err := http.Get(url)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				// fmt.Println(resp)
+				UnmarshalJSON(resp, &requestInput)
 				coinString = CoinName
 				fmt.Println(coinString)
 
 				switch {
 				case Verbose && !JSON:
-					verboseInfo(coinString)
+					verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
+					for i := 0; i < verboseVal.NumField(); i++ {
+					fmt.Print(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
+					}
+					fmt.Printf("\n\n")
+
 				case JSON && !Verbose:
-					JSONInfo(coinString)
+					jsonString := JSONInfo(coinString, requestInput)
+					fmt.Println(jsonString)
+
 				case Verbose && JSON:
-					verboseJSONInfo(coinString)
+					verboseJSON := VerboseJSONInfo(coinString, requestInput)
+					fmt.Println(verboseJSON)
+
 				default:
-					defaultInfo(coinString)
+					defaultInfo := DefaultInfo(coinString, requestInput)
+					fmt.Printf("%.5f\n", defaultInfo)
 				}
 
 				if Time == true {
-					elapsedTime(start)
+				time :=	ElapsedTime(start)
+				fmt.Printf("%.1f seconds\n\n\n", time)
 				}
 
 			}
@@ -99,8 +111,6 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
-
 
 func init() {
 	cobra.OnInitialize(initConfig)
@@ -133,70 +143,65 @@ func initConfig() {
 	}
 }
 
-<<<<<<< HEAD
-
 
 // CUSTOM FUNCTIONS
 
-=======
->>>>>>> ace2caf916648393edb8f7140216e6b819858e4f
-func unmarshalJSON(url string){
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
+func UnmarshalJSON(resp *http.Response, input *map[string]Coin) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	error1 := json.Unmarshal(body, &requestInput)
+	error1 := json.Unmarshal(body, &input)
 	if error1 != nil {
 		fmt.Println(err)
 		return
 	}
 }
 
-func defaultInfo(coin string) {
-	coinName := requestInput[coin]
+func DefaultInfo(coin string, input map[string]Coin) float64{
+	coinName := input[coin]
 	price, _ := strconv.ParseFloat(coinName.Last, 64)
-	fmt.Printf("%.5f\n", price)
+	return price
 }
 
-func JSONInfo(coin string) {
-	jsonString, err := json.Marshal(requestInput[coin].Last)
+func JSONInfo(coin string, input map[string]Coin) string{
+	json, err := json.Marshal(input[coin].Last)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(jsonString))
+	jsonString := string(json)
+	return jsonString
 }
 
-func verboseJSONInfo(coin string) {
-	jsonString, err := json.Marshal(requestInput[coin])
+func VerboseJSONInfo(coin string, input map[string]Coin) string {
+	json, err := json.Marshal(input[coin])
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(jsonString))
+	jsonString := string(json)
+	return jsonString
 }
 
-func verboseInfo(coin string) {
+func VerboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface{}) {
 
-	coinName := requestInput[coin]
+	coinName := input[coin]
 	val := reflect.ValueOf(coinName)
 
 	values := make([]interface{}, val.NumField())
 
-	fmt.Println("------ ", coin, " ------")
-
 	for i := 0; i < val.NumField(); i++ {
 		values[i] = val.Field(i).Interface()
-		fmt.Print(val.Type().Field(i).Name, ": ", values[i], "\n")
 	}
+	// fmt.Println(val)
+	// fmt.Println(values)
 
-	fmt.Println("------ $$$$$$$$ ------ \n")
+	return val, values
 }
 
-func elapsedTime(start time.Time) {
+func ElapsedTime(start time.Time) float64{
 	timeElapsed := time.Since(start)
 	time := timeElapsed.Seconds()
-	fmt.Printf("%.1f seconds\n\n\n", time)
+	return time
+}
+
+func Add(a int) int {
+	return a + num
 }
