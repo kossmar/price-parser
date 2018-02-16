@@ -73,12 +73,8 @@ var rootCmd = &cobra.Command{
 			UnmarshalJSON(resp, &requestInput)
 			coinString = CoinName
 			fmt.Println(coinString)
-
-			_, err1 := newWriter.WriteString(coinString + "\n")
-			if err1 != nil {
-				fmt.Println("Couldn't output coin name")
-			}
-			newWriter.Flush()
+			OutputToFile(coinString + "\n", newWriter)
+			
 			switch {
 			case Verbose && !JSON:
 				verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
