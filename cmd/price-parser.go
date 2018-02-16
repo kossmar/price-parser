@@ -33,10 +33,10 @@ var num = 5
 
 var cfgFile string
 var coinString string
-var Verbose bool
-var Time bool
-var JSON bool
-var CoinName string
+var VerboseFlag bool
+var TimeFlag bool
+var JSONFlag bool
+var CoinNameFlag string
 
 var rootCmd = &cobra.Command{
 	Use:   "price-parser",
@@ -71,23 +71,23 @@ var rootCmd = &cobra.Command{
 			}
 
 			UnmarshalJSON(resp, &requestInput)
-			coinString = CoinName
+			coinString = CoinNameFlag
 			fmt.Println(coinString)
 			OutputToFile(coinString + "\n", newWriter)
-			
+
 			switch {
-			case Verbose && !JSON:
+			case VerboseFlag && !JSONFlag:
 				verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
 				for i := 0; i < verboseVal.NumField(); i++ {
 					output := fmt.Sprint(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
 					fmt.Printf(output)
 					OutputToFile(output, newWriter)
 				}
-			case JSON && !Verbose:
+			case JSONFlag && !VerboseFlag:
 				jsonString := JSONInfo(coinString, requestInput) + "\n"
 				fmt.Println(jsonString)
 				OutputToFile(jsonString, newWriter)
-			case Verbose && JSON:
+			case VerboseFlag && JSONFlag:
 				verboseJSON := VerboseJSONInfo(coinString, requestInput)
 				fmt.Println(verboseJSON)
 				OutputToFile(verboseJSON + "\n", newWriter)
@@ -98,7 +98,7 @@ var rootCmd = &cobra.Command{
 				OutputToFile(stringThing, newWriter)
 			}
 
-			if Time == true {
+			if TimeFlag == true {
 				time := ElapsedTime(start)
 				output := fmt.Sprintf("%.1f seconds\n", time)
 				fmt.Printf(output)
@@ -120,10 +120,10 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	rootCmd.Flags().BoolVarP(&Time, "time", "T", false, "show the time between prints")
-	rootCmd.Flags().BoolVarP(&JSON, "json", "j", false, "print output in JSON format")
-	rootCmd.Flags().StringVar(&CoinName, "coin", "USDT_BTC", "specify coin")
+	rootCmd.Flags().BoolVarP(&VerboseFlag, "verbose", "v", false, "verbose output")
+	rootCmd.Flags().BoolVarP(&TimeFlag, "time", "T", false, "show the time between prints")
+	rootCmd.Flags().BoolVarP(&JSONFlag, "json", "j", false, "print output in JSON format")
+	rootCmd.Flags().StringVar(&CoinNameFlag, "coin", "USDT_BTC", "specify coin")
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.price-parser.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
