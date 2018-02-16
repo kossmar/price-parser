@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"reflect"
@@ -47,6 +46,20 @@ var rootCmd = &cobra.Command{
 
 		url := "https://poloniex.com/public?command=returnTicker"
 		var requestInput map[string]Coin
+
+		file, _ := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+		// file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		// if err != nil {
+		// 	panic(err)
+		// }
+    //
+		// defer file.Close()
+    //
+		// file.Sync()
+
+		newWriter := bufio.NewWriter(file)
+
 		for {
 			start := time.Now()
 			time.Sleep(time.Second * 5)
@@ -61,78 +74,43 @@ var rootCmd = &cobra.Command{
 			coinString = CoinName
 			fmt.Println(coinString)
 
-			f, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			defer f.Close()
-
-			f.Sync()
-
-			w := bufio.NewWriter(f)
-
-			_, err1 := w.WriteString(coinString + "\n")
+			_, err1 := newWriter.WriteString(coinString + "\n")
 			if err1 != nil {
-				fmt.Println("you fucked up")
+				fmt.Println("Couldn't output coin name")
 			}
-			w.Flush()
+			newWriter.Flush()
 			switch {
 			case Verbose && !JSON:
 				verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
 				for i := 0; i < verboseVal.NumField(); i++ {
 					output := fmt.Sprint(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
 					fmt.Printf(output)
-					_, err := w.WriteString(output)
-					if err != nil {
-						fmt.Println("you fucked up")
-					}
-					w.Flush()
+					OutputToFile(output, newWriter)
 				}
-				fmt.Printf("\n")
 			case JSON && !Verbose:
 				jsonString := JSONInfo(coinString, requestInput) + "\n"
 				fmt.Println(jsonString)
-				_, err := w.WriteString(jsonString)
-				if err != nil {
-					fmt.Println("you fucked up")
-				}
-				w.Flush()
+				OutputToFile(jsonString, newWriter)
 			case Verbose && JSON:
 				verboseJSON := VerboseJSONInfo(coinString, requestInput)
 				fmt.Println(verboseJSON)
-				_, err := w.WriteString(verboseJSON + "\n")
-				if err != nil {
-					fmt.Println("you fucked up")
-				}
+				OutputToFile(verboseJSON + "\n", newWriter)
 			default:
 				defaultInfo := DefaultInfo(coinString, requestInput)
 				fmt.Printf("%.5f\n", defaultInfo)
-				stringThing := (FloatToString(defaultInfo))
-				_, err := w.WriteString(stringThing + "\n")
-				if err != nil {
-					fmt.Println("you fucked up")
-				}
-				w.Flush()
+				stringThing := (FloatToString(defaultInfo)) + "\n"
+				OutputToFile(stringThing, newWriter)
 			}
 
 			if Time == true {
 				time := ElapsedTime(start)
 				output := fmt.Sprintf("%.1f seconds\n", time)
 				fmt.Printf(output)
-				_, err := w.WriteString(output)
-				if err != nil {
-					fmt.Println("you fucked up")
-				}
-				w.Flush()
+				OutputToFile(output, newWriter)
 			}
 
-			_, err2 := w.WriteString("\n")
-			if err2 != nil {
-				fmt.Println("you fucked up")
-			}
-			w.Flush()
-
+			fmt.Print("\n")
+			OutputToFile("\n", newWriter)
 		}
 	},
 }
@@ -176,6 +154,28 @@ func initConfig() {
 }
 
 // CUSTOM FUNCTIONS
+
+func setupOutputFile() (file *os.File) {
+	file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		if err := file.Close(); err != nil {
+		panic(err)
+		}
+	}()
+	return file
+}
+
+func OutputToFile(output string, writer *bufio.Writer) {
+	_, err := writer.WriteString(output)
+	if err != nil {
+		panic(err)
+	}
+	writer.Flush()
+}
 
 func UnmarshalJSON(resp *http.Response, input *map[string]Coin) {
 	defer resp.Body.Close()
