@@ -1,31 +1,16 @@
-// Copyright © 2018 Nicholas Koss kossmar2@gmail.com
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"time"
-	"net/http"
-	"io/ioutil"
-	"reflect"
-	"encoding/json"
-	"strconv"
 	"bufio"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
-
+	"net/http"
+	"os"
+	"reflect"
+	"strconv"
+	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -45,7 +30,6 @@ type Coin struct {
 	Low24hr       string `json: "low24hr"`
 }
 
-
 var num = 5
 
 var cfgFile string
@@ -58,86 +42,100 @@ var CoinName string
 var rootCmd = &cobra.Command{
 	Use:   "price-parser",
 	Short: "displays price information for various cryptocurrencies",
-	Long: `...`,
-		Run: func(cmd *cobra.Command, args []string) {
+	Long:  `...`,
+	Run: func(cmd *cobra.Command, args []string) {
 
-			url := "https://poloniex.com/public?command=returnTicker"
-			var requestInput map[string]Coin
-			for {
-				start := time.Now()
-				time.Sleep(time.Second * 5)
+		url := "https://poloniex.com/public?command=returnTicker"
+		var requestInput map[string]Coin
+		for {
+			start := time.Now()
+			time.Sleep(time.Second * 5)
 
-				resp, err := http.Get(url)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				// fmt.Println(resp)
-				UnmarshalJSON(resp, &requestInput)
-				coinString = CoinName
-				fmt.Println(coinString)
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
+			UnmarshalJSON(resp, &requestInput)
+			coinString = CoinName
+			fmt.Println(coinString)
 
-				// f, err := os.Create("/Users/spinkringle/Documents/datazz")
-				// if err != nil {
-				// 	fmt.Println("you fucked up")
-				// }
+			f, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-				f, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-				if err != nil {
-					log.Fatal(err)
-				}
+			defer f.Close()
 
+			f.Sync()
 
-				defer f.Close()
+			w := bufio.NewWriter(f)
 
-				f.Sync()
-				w := bufio.NewWriter(f)
-
-				_, err1 := w.WriteString(coinString + "\n")
-				if err1 != nil {
-					fmt.Println("you fucked up")
-				}
-				w.Flush()
-
-
-				switch {
-				case Verbose && !JSON:
-					verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
-					for i := 0; i < verboseVal.NumField(); i++ {
-					fmt.Print(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
-					}
-					fmt.Printf("\n\n")
-
-				case JSON && !Verbose:
-					jsonString := JSONInfo(coinString, requestInput)
-					fmt.Println(jsonString)
-
-				case Verbose && JSON:
-					verboseJSON := VerboseJSONInfo(coinString, requestInput)
-					fmt.Println(verboseJSON)
-
-				default:
-					defaultInfo := DefaultInfo(coinString, requestInput)
-					fmt.Printf("%.5f\n", defaultInfo)
-
-					stringThing := (FloatToString(defaultInfo)) + "\n\n"
-					_, err := w.WriteString(stringThing)
+			_, err1 := w.WriteString(coinString + "\n")
+			if err1 != nil {
+				fmt.Println("you fucked up")
+			}
+			w.Flush()
+			switch {
+			case Verbose && !JSON:
+				verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
+				for i := 0; i < verboseVal.NumField(); i++ {
+					output := fmt.Sprint(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
+					fmt.Printf(output)
+					_, err := w.WriteString(output)
 					if err != nil {
 						fmt.Println("you fucked up")
 					}
 					w.Flush()
 				}
-
-				if Time == true {
-				time :=	ElapsedTime(start)
-				fmt.Printf("%.1f seconds\n\n\n", time)
+				fmt.Printf("\n")
+			case JSON && !Verbose:
+				jsonString := JSONInfo(coinString, requestInput) + "\n"
+				fmt.Println(jsonString)
+				_, err := w.WriteString(jsonString)
+				if err != nil {
+					fmt.Println("you fucked up")
 				}
-
+				w.Flush()
+			case Verbose && JSON:
+				verboseJSON := VerboseJSONInfo(coinString, requestInput)
+				fmt.Println(verboseJSON)
+				_, err := w.WriteString(verboseJSON + "\n")
+				if err != nil {
+					fmt.Println("you fucked up")
+				}
+			default:
+				defaultInfo := DefaultInfo(coinString, requestInput)
+				fmt.Printf("%.5f\n", defaultInfo)
+				stringThing := (FloatToString(defaultInfo))
+				_, err := w.WriteString(stringThing + "\n")
+				if err != nil {
+					fmt.Println("you fucked up")
+				}
+				w.Flush()
 			}
-		 },
-}
 
+			if Time == true {
+				time := ElapsedTime(start)
+				output := fmt.Sprintf("%.1f seconds\n", time)
+				fmt.Printf(output)
+				_, err := w.WriteString(output)
+				if err != nil {
+					fmt.Println("you fucked up")
+				}
+				w.Flush()
+			}
+
+			_, err2 := w.WriteString("\n")
+			if err2 != nil {
+				fmt.Println("you fucked up")
+			}
+			w.Flush()
+
+		}
+	},
+}
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
@@ -177,7 +175,6 @@ func initConfig() {
 	}
 }
 
-
 // CUSTOM FUNCTIONS
 
 func UnmarshalJSON(resp *http.Response, input *map[string]Coin) {
@@ -190,13 +187,13 @@ func UnmarshalJSON(resp *http.Response, input *map[string]Coin) {
 	}
 }
 
-func DefaultInfo(coin string, input map[string]Coin) float64{
+func DefaultInfo(coin string, input map[string]Coin) float64 {
 	coinName := input[coin]
 	price, _ := strconv.ParseFloat(coinName.Last, 64)
 	return price
 }
 
-func JSONInfo(coin string, input map[string]Coin) string{
+func JSONInfo(coin string, input map[string]Coin) string {
 	json, err := json.Marshal(input[coin].Last)
 	if err != nil {
 		fmt.Println(err)
@@ -230,12 +227,12 @@ func VerboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface
 	return val, values
 }
 
-func ElapsedTime(start time.Time) float64{
+func ElapsedTime(start time.Time) float64 {
 	timeElapsed := time.Since(start)
 	time := timeElapsed.Seconds()
 	return time
 }
 
 func FloatToString(input_num float64) string {
-    return strconv.FormatFloat(input_num, 'f', 6, 64)
+	return strconv.FormatFloat(input_num, 'f', 6, 64)
 }
