@@ -121,7 +121,8 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 		}
 
 		if TimeFlag == true {
-			time := elapsedTime(start)
+			timeElapsed := time.Since(start)
+			time := timeElapsed.Seconds()
 			output := fmt.Sprintf("%.1f seconds\n", time)
 			outputVar.WriteString(output)
 		}
@@ -193,18 +194,9 @@ func verboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface
 
 	coinName := input[coin]
 	val := reflect.ValueOf(coinName)
-
 	values := make([]interface{}, val.NumField())
-
 	for i := 0; i < val.NumField(); i++ {
 		values[i] = val.Field(i).Interface()
 	}
-
 	return val, values
-}
-
-func elapsedTime(start time.Time) float64 {
-	timeElapsed := time.Since(start)
-	time := timeElapsed.Seconds()
-	return time
 }
