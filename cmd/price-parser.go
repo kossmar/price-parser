@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,7 +10,6 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-	"bytes"
 	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -35,13 +35,13 @@ var (
 		Use:   "price-parser",
 		Short: "displays price information for various cryptocurrencies",
 		Long:  `...`,
-		Run: parsePriceCmd,
+		Run:   parsePriceCmd,
 	}
-	cfgFile string
-	coinString string
-	VerboseFlag bool
-	TimeFlag bool
-	JSONFlag bool
+	cfgFile      string
+	coinString   string
+	VerboseFlag  bool
+	TimeFlag     bool
+	JSONFlag     bool
 	CoinNameFlag string
 )
 
@@ -103,16 +103,16 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 
 		switch {
 		case VerboseFlag && !JSONFlag:
-			verboseVal, verboseValues := VerboseInfo(coinString, requestInput)
+			verboseVal, verboseValues := verboseInfo(coinString, requestInput)
 			for i := 0; i < verboseVal.NumField(); i++ {
 				output := fmt.Sprint(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
 				outputVar.WriteString(output)
 			}
 		case JSONFlag && !VerboseFlag:
-			jsonString := JSONInfo(coinString, requestInput) + "\n"
+			jsonString := jsonInfo(coinString, requestInput) + "\n"
 			outputVar.WriteString(jsonString)
 		case VerboseFlag && JSONFlag:
-			verboseJSON := VerboseJSONInfo(coinString, requestInput) + "\n"
+			verboseJSON := verboseJSONInfo(coinString, requestInput) + "\n"
 			outputVar.WriteString(verboseJSON)
 		default:
 			defaultInfo := defaultInfo(coinString, requestInput)
@@ -121,7 +121,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 		}
 
 		if TimeFlag == true {
-			time := ElapsedTime(start)
+			time := elapsedTime(start)
 			output := fmt.Sprintf("%.1f seconds\n", time)
 			outputVar.WriteString(output)
 		}
@@ -129,7 +129,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 		outputVar.WriteString("\n")
 
 		fmt.Println(outputVar.String())
-		OutputToFile(outputVar.String(), newWriter)
+		outputToFile(outputVar.String(), newWriter)
 	}
 }
 
@@ -147,7 +147,7 @@ func setupOutputFile() (file *os.File) {
 	return file
 }
 
-func OutputToFile(output string, writer *bufio.Writer) {
+func outputToFile(output string, writer *bufio.Writer) {
 	_, err := writer.WriteString(output)
 	if err != nil {
 		panic(err)
@@ -171,7 +171,7 @@ func defaultInfo(coin string, input map[string]Coin) float64 {
 	return price
 }
 
-func JSONInfo(coin string, input map[string]Coin) string {
+func jsonInfo(coin string, input map[string]Coin) string {
 	json, err := json.Marshal(input[coin].Last)
 	if err != nil {
 		fmt.Println(err)
@@ -180,7 +180,7 @@ func JSONInfo(coin string, input map[string]Coin) string {
 	return jsonString
 }
 
-func VerboseJSONInfo(coin string, input map[string]Coin) string {
+func verboseJSONInfo(coin string, input map[string]Coin) string {
 	json, err := json.Marshal(input[coin])
 	if err != nil {
 		fmt.Println(err)
@@ -189,7 +189,7 @@ func VerboseJSONInfo(coin string, input map[string]Coin) string {
 	return jsonString
 }
 
-func VerboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface{}) {
+func verboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface{}) {
 
 	coinName := input[coin]
 	val := reflect.ValueOf(coinName)
@@ -203,7 +203,7 @@ func VerboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface
 	return val, values
 }
 
-func ElapsedTime(start time.Time) float64 {
+func elapsedTime(start time.Time) float64 {
 	timeElapsed := time.Since(start)
 	time := timeElapsed.Seconds()
 	return time
