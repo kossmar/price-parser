@@ -97,7 +97,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		UnmarshalJSON(resp, &requestInput)
+		unmarshalJSON(resp, &requestInput)
 		coinString = CoinNameFlag
 		outputVar.WriteString(coinString + "\n")
 
@@ -115,7 +115,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 			verboseJSON := VerboseJSONInfo(coinString, requestInput) + "\n"
 			outputVar.WriteString(verboseJSON)
 		default:
-			defaultInfo := DefaultInfo(coinString, requestInput)
+			defaultInfo := defaultInfo(coinString, requestInput)
 			defaultInfoString := strconv.FormatFloat(defaultInfo, 'f', 6, 64) + "\n"
 			outputVar.WriteString(defaultInfoString)
 		}
@@ -155,7 +155,7 @@ func OutputToFile(output string, writer *bufio.Writer) {
 	writer.Flush()
 }
 
-func UnmarshalJSON(resp *http.Response, input *map[string]Coin) {
+func unmarshalJSON(resp *http.Response, input *map[string]Coin) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	error1 := json.Unmarshal(body, &input)
@@ -165,7 +165,7 @@ func UnmarshalJSON(resp *http.Response, input *map[string]Coin) {
 	}
 }
 
-func DefaultInfo(coin string, input map[string]Coin) float64 {
+func defaultInfo(coin string, input map[string]Coin) float64 {
 	coinName := input[coin]
 	price, _ := strconv.ParseFloat(coinName.Last, 64)
 	return price
