@@ -17,6 +17,34 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Coin struct {
+	Id            int    `json: "id"`
+	Last          string `json: "last"`
+	LowestAsk     string `json: "lowestAsk"`
+	HighestBid    string `json: "highestBid"`
+	PercentChange string `json: "percentChange"`
+	BaseVolume    string `json: "baseVolume"`
+	QuoteVolume   string `json: "quoteVolume"`
+	IsFrozen      string `json: "isFrozen"`
+	High24hr      string `json: "high24hr"`
+	Low24hr       string `json: "low24hr"`
+}
+
+var (
+	ParsePriceCmd = &cobra.Command{
+		Use:   "price-parser",
+		Short: "displays price information for various cryptocurrencies",
+		Long:  `...`,
+		Run: parsePriceCmd,
+	}
+	cfgFile string
+	coinString string
+	VerboseFlag bool
+	TimeFlag bool
+	JSONFlag bool
+	CoinNameFlag string
+)
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	ParsePriceCmd.Flags().BoolVarP(&VerboseFlag, "verbose", "v", false, "verbose output")
@@ -45,36 +73,6 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
-}
-
-type Coin struct {
-	Id            int    `json: "id"`
-	Last          string `json: "last"`
-	LowestAsk     string `json: "lowestAsk"`
-	HighestBid    string `json: "highestBid"`
-	PercentChange string `json: "percentChange"`
-	BaseVolume    string `json: "baseVolume"`
-	QuoteVolume   string `json: "quoteVolume"`
-	IsFrozen      string `json: "isFrozen"`
-	High24hr      string `json: "high24hr"`
-	Low24hr       string `json: "low24hr"`
-}
-
-var (
-	num = 5
-	cfgFile string
-	coinString string
-	VerboseFlag bool
-	TimeFlag bool
-	JSONFlag bool
-	CoinNameFlag string
-)
-
-var ParsePriceCmd = &cobra.Command{
-	Use:   "price-parser",
-	Short: "displays price information for various cryptocurrencies",
-	Long:  `...`,
-	Run: parsePriceCmd,
 }
 
 func parsePriceCmd(cmd *cobra.Command, args []string) {
