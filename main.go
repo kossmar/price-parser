@@ -14,8 +14,17 @@
 
 package main
 
-import "github.com/kossmar/price-parser/cmd"
+import (
+	"fmt"
+	"os"
+	"github.com/kossmar/price-parser/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.ParsePriceCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	cmd.ParsePriceCmd.Execute()
 }
