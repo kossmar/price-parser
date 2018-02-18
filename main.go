@@ -16,8 +16,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/kossmar/price-parser3/cmd"
 	"os"
-	"github.com/kossmar/price-parser/cmd"
 )
 
 func main() {

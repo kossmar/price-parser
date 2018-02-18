@@ -8,16 +8,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"reflect"
-	"strconv"
+	// "strconv"
+	"sort"
 	"time"
 
+	"github.com/fatih/structs"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-type Coin struct {
+type Poloniex struct {
 	Id            int    `json: "id"`
 	Last          string `json: "last"`
 	LowestAsk     string `json: "lowestAsk"`
@@ -28,6 +29,19 @@ type Coin struct {
 	IsFrozen      string `json: "isFrozen"`
 	High24hr      string `json: "high24hr"`
 	Low24hr       string `json: "low24hr"`
+}
+
+type HitBTC struct {
+	Ask         string `json: "ask"`
+	Bid         string `json: "bid"`
+	Last        string `json: "last"`
+	Open        string `json: "open"`
+	Low         string `json: "low"`
+	High        string `json: "high"`
+	Volume      string `json: "volume"`
+	VolumeQuote string `json: "volumeQuote"`
+	Timestamp   string `json: "timestamp"`
+	Symbol      string `json: "symbol"`
 }
 
 var (
@@ -43,6 +57,7 @@ var (
 	TimeFlag     bool
 	JSONFlag     bool
 	CoinNameFlag string
+	ApiFlag      string
 )
 
 func init() {
@@ -51,6 +66,7 @@ func init() {
 	ParsePriceCmd.Flags().BoolVarP(&TimeFlag, "time", "T", false, "show the time between prints")
 	ParsePriceCmd.Flags().BoolVarP(&JSONFlag, "json", "j", false, "print output in JSON format")
 	ParsePriceCmd.Flags().StringVar(&CoinNameFlag, "coin", "USDT_BTC", "specify coin")
+	ParsePriceCmd.Flags().StringVar(&ApiFlag, "api", "poloniex", "specify api")
 	ParsePriceCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.price-parser.yaml)")
 	ParsePriceCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
@@ -77,47 +93,94 @@ func initConfig() {
 
 func parsePriceCmd(cmd *cobra.Command, args []string) {
 
-	url := "https://poloniex.com/public?command=returnTicker"
-
-	var requestInput map[string]Coin
-
-	file, _ := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	newWriter := bufio.NewWriter(file)
+	var url string
+	coinString = CoinNameFlag
+	var currentCoin map[string]interface{}
 
 	for {
 
-		var outputVar bytes.Buffer
-
 		start := time.Now()
-		time.Sleep(time.Second * 5)
-
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		unmarshalJSON(resp, &requestInput)
-		coinString = CoinNameFlag
+		time.Sleep(time.Second * 2)
+		var outputVar bytes.Buffer
 		outputVar.WriteString(coinString + "\n")
+
+		file, _ := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		newWriter := bufio.NewWriter(file)
+
+		switch ApiFlag {
+		case "poloniex":
+			url = "https://poloniex.com/public?command=returnTicker"
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			var requestInput map[string]Poloniex
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			error1 := json.Unmarshal(body, &requestInput)
+			if error1 != nil {
+				fmt.Println(error1)
+				return
+			}
+			s := structs.New(requestInput[coinString])
+			m := s.Map()
+			currentCoin = m
+
+		case "hitbtc":
+			url = "https://api.hitbtc.com/api/2/public/ticker"
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			var requestInput []HitBTC
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			error1 := json.Unmarshal(body, &requestInput)
+			if error1 != nil {
+				fmt.Println(error1)
+				return
+			}
+			coin := HitBTC{}
+			for _, elem := range requestInput {
+				if elem.Symbol == coinString {
+					coin = elem
+				}
+			}
+			s := structs.New(coin)
+			m := s.Map()
+			currentCoin = m
+		}
 
 		switch {
 		case VerboseFlag && !JSONFlag:
-			verboseVal, verboseValues := verboseInfo(coinString, requestInput)
-			for i := 0; i < verboseVal.NumField(); i++ {
-				output := fmt.Sprint(verboseVal.Type().Field(i).Name, ": ", verboseValues[i], "\n")
-				outputVar.WriteString(output)
+			var keys []string
+			for k := range currentCoin {
+				keys = append(keys, k)
 			}
-		case JSONFlag && !VerboseFlag:
-			jsonString := jsonInfo(coinString, requestInput) + "\n"
-			outputVar.WriteString(jsonString)
+			sort.Strings(keys)
+			for _, k := range keys {
+				string := fmt.Sprint(k, ": ", currentCoin[k], "\n")
+				outputVar.WriteString(string)
+			}
 		case VerboseFlag && JSONFlag:
-			verboseJSON := verboseJSONInfo(coinString, requestInput) + "\n"
-			outputVar.WriteString(verboseJSON)
+			coin, err := json.Marshal(currentCoin)
+			if err != nil {
+				fmt.Println(err)
+			}
+			output := string(coin)
+			outputVar.WriteString(output)
+		case JSONFlag && !VerboseFlag:
+			coin, err := json.Marshal(currentCoin["Last"])
+			if err != nil {
+				fmt.Println(err)
+			}
+			output := string(coin)
+			outputVar.WriteString(output)
 		default:
-			defaultInfo := defaultInfo(coinString, requestInput)
-			defaultInfoString := strconv.FormatFloat(defaultInfo, 'f', 6, 64) + "\n"
-			outputVar.WriteString(defaultInfoString)
+			output := fmt.Sprint(currentCoin["Last"])
+			outputVar.WriteString(output)
 		}
 
 		if TimeFlag == true {
@@ -154,49 +217,4 @@ func outputToFile(output string, writer *bufio.Writer) {
 		panic(err)
 	}
 	writer.Flush()
-}
-
-func unmarshalJSON(resp *http.Response, input *map[string]Coin) {
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	error1 := json.Unmarshal(body, &input)
-	if error1 != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
-func defaultInfo(coin string, input map[string]Coin) float64 {
-	coinName := input[coin]
-	price, _ := strconv.ParseFloat(coinName.Last, 64)
-	return price
-}
-
-func jsonInfo(coin string, input map[string]Coin) string {
-	json, err := json.Marshal(input[coin].Last)
-	if err != nil {
-		fmt.Println(err)
-	}
-	jsonString := string(json)
-	return jsonString
-}
-
-func verboseJSONInfo(coin string, input map[string]Coin) string {
-	json, err := json.Marshal(input[coin])
-	if err != nil {
-		fmt.Println(err)
-	}
-	jsonString := string(json)
-	return jsonString
-}
-
-func verboseInfo(coin string, input map[string]Coin) (reflect.Value, []interface{}) {
-
-	coinName := input[coin]
-	val := reflect.ValueOf(coinName)
-	values := make([]interface{}, val.NumField())
-	for i := 0; i < val.NumField(); i++ {
-		values[i] = val.Field(i).Interface()
-	}
-	return val, values
 }
