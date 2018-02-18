@@ -89,11 +89,15 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+	if ApiFlag == "hitbtc" {
+		CoinNameFlag = "BTCUSD"
+	}
 }
 
 func parsePriceCmd(cmd *cobra.Command, args []string) {
 
 	var url string
+
 	coinString = CoinNameFlag
 	var currentCoin map[string]interface{}
 
