@@ -101,8 +101,6 @@ func initConfig() {
 
 func parsePriceCmd(cmd *cobra.Command, args []string) error {
 
-	var url string
-
 	coinString = CoinNameFlag
 	var currentCoin map[string]interface{}
 
@@ -118,14 +116,9 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 
 		switch ApiFlag {
 		case "poloniex":
-			url = "https://poloniex.com/public?command=returnTicker"
-			resp, err := http.Get(url)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
-			var requestInput map[string]Poloniex
+			resp := getJson("https://poloniex.com/public?command=returnTicker")
 			defer resp.Body.Close()
+			var requestInput map[string]Poloniex
 			body, err := ioutil.ReadAll(resp.Body)
 			error1 := json.Unmarshal(body, &requestInput)
 			if error1 != nil {
@@ -137,12 +130,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			currentCoin = m
 
 		case "hitbtc":
-			url = "https://api.hitbtc.com/api/2/public/ticker"
-			resp, err := http.Get(url)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
+			resp := getJson("https://api.hitbtc.com/api/2/public/ticker")
 			defer resp.Body.Close()
 			var requestInput []HitBTC
 			body, err := ioutil.ReadAll(resp.Body)
@@ -227,4 +215,13 @@ func outputToFile(output string, writer *bufio.Writer) {
 		panic(err)
 	}
 	writer.Flush()
+}
+
+func getJson(url string) *http.Response {
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return resp
 }

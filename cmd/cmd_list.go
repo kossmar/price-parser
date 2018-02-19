@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"net/http"
+	// "net/http"
+	"bytes"
 	"sort"
 )
 
@@ -17,16 +18,18 @@ var (
 	}
 )
 
+func init() {
+	RootCmd.AddCommand(CoinListCmd)
+	CoinListCmd.Flags().StringVar(&ApiFlag, "api", "poloniex", "specify api")
+}
+
 func coinListCmd(cmd *cobra.Command, args []string) error {
+
+	var outputVar bytes.Buffer
 
 	switch ApiFlag {
 	case "hitbtc":
-		url := "https://api.hitbtc.com/api/2/public/ticker"
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
+		resp := getJson("https://api.hitbtc.com/api/2/public/ticker")
 		defer resp.Body.Close()
 		var requestInput []HitBTC
 		body, err := ioutil.ReadAll(resp.Body)
@@ -39,24 +42,13 @@ func coinListCmd(cmd *cobra.Command, args []string) error {
 		for _, coin := range requestInput {
 			nameListSlice = append(nameListSlice, coin.Symbol)
 		}
-
 		sort.Strings(nameListSlice)
-		var i int
 
-		for _, name := range nameListSlice {
-			fmt.Print(name + "   ")
-			if i%15 == 0 {
-				fmt.Printf("\n")
-			}
-			i++
-		}
+		formattedNameList := formatCoinList(nameListSlice)
+		outputVar.WriteString(formattedNameList)
+
 	case "poloniex":
-		url := "https://poloniex.com/public?command=returnTicker"
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
+		resp := getJson("https://poloniex.com/public?command=returnTicker")
 		defer resp.Body.Close()
 		var requestInput map[string]Poloniex
 		body, err := ioutil.ReadAll(resp.Body)
@@ -65,19 +57,27 @@ func coinListCmd(cmd *cobra.Command, args []string) error {
 			fmt.Println(error1)
 			return err
 		}
-		var i int
+		var nameListSlice []string
 		for k, _ := range requestInput {
-			fmt.Print(k + "   ")
-			if i%15 == 0 {
-				fmt.Printf("\n")
-			}
-			i++
+			nameListSlice = append(nameListSlice, k)
 		}
+		formattedNameList := formatCoinList(nameListSlice)
+		outputVar.WriteString(formattedNameList)
 	}
+
+	fmt.Print(outputVar.String())
 	return nil
 }
 
-func init() {
-	RootCmd.AddCommand(CoinListCmd)
-	CoinListCmd.Flags().StringVar(&ApiFlag, "api", "poloniex", "specify api")
+func formatCoinList(nameList []string) string {
+	var buffer bytes.Buffer
+	var i int
+	for _, name := range nameList {
+		buffer.WriteString(name + "   ")
+		if i%15 == 0 {
+			buffer.WriteString("\n")
+		}
+		i++
+	}
+	return buffer.String()
 }
