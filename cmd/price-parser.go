@@ -45,12 +45,16 @@ type HitBTC struct {
 }
 
 var (
-	ParsePriceCmd = &cobra.Command{
-		Use:   "price-parser",
-		Short: "displays price information for various cryptocurrencies",
-		Long:  `...`,
-		Run:   parsePriceCmd,
+	RootCmd = &cobra.Command{
+		Use: "parser",
 	}
+
+	ParsePriceCmd = &cobra.Command{
+		Use:   "parse",
+		Short: "displays price information for various cryptocurrencies",
+		RunE:  parsePriceCmd,
+	}
+
 	cfgFile      string
 	coinString   string
 	VerboseFlag  bool
@@ -62,6 +66,7 @@ var (
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	RootCmd.AddCommand(ParsePriceCmd)
 	ParsePriceCmd.Flags().BoolVarP(&VerboseFlag, "verbose", "v", false, "verbose output")
 	ParsePriceCmd.Flags().BoolVarP(&TimeFlag, "time", "T", false, "show the time between prints")
 	ParsePriceCmd.Flags().BoolVarP(&JSONFlag, "json", "j", false, "print output in JSON format")
@@ -94,7 +99,7 @@ func initConfig() {
 	}
 }
 
-func parsePriceCmd(cmd *cobra.Command, args []string) {
+func parsePriceCmd(cmd *cobra.Command, args []string) error {
 
 	var url string
 
@@ -117,7 +122,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 			resp, err := http.Get(url)
 			if err != nil {
 				fmt.Println(err)
-				return
+				return err
 			}
 			var requestInput map[string]Poloniex
 			defer resp.Body.Close()
@@ -125,7 +130,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 			error1 := json.Unmarshal(body, &requestInput)
 			if error1 != nil {
 				fmt.Println(error1)
-				return
+				return err
 			}
 			s := structs.New(requestInput[coinString])
 			m := s.Map()
@@ -136,15 +141,15 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 			resp, err := http.Get(url)
 			if err != nil {
 				fmt.Println(err)
-				return
+				return err
 			}
-			var requestInput []HitBTC
 			defer resp.Body.Close()
+			var requestInput []HitBTC
 			body, err := ioutil.ReadAll(resp.Body)
 			error1 := json.Unmarshal(body, &requestInput)
 			if error1 != nil {
 				fmt.Println(error1)
-				return
+				return err
 			}
 			coin := HitBTC{}
 			for _, elem := range requestInput {
@@ -199,6 +204,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) {
 		fmt.Println(outputVar.String())
 		outputToFile(outputVar.String(), newWriter)
 	}
+	return nil
 }
 
 func setupOutputFile() (file *os.File) {
