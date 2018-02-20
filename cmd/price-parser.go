@@ -116,13 +116,15 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 
 		switch ApiFlag {
 		case "poloniex":
-			resp := getJson("https://poloniex.com/public?command=returnTicker")
+			resp, err := getJson("https://poloniex.com/public?command=returnTicker")
+			if err != nil {
+				return err
+			}
 			defer resp.Body.Close()
 			var requestInput map[string]Poloniex
 			body, err := ioutil.ReadAll(resp.Body)
 			error1 := json.Unmarshal(body, &requestInput)
 			if error1 != nil {
-				fmt.Println(error1)
 				return err
 			}
 			s := structs.New(requestInput[coinString])
@@ -130,13 +132,15 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			currentCoin = m
 
 		case "hitbtc":
-			resp := getJson("https://api.hitbtc.com/api/2/public/ticker")
+			resp, err := getJson("https://api.hitbtc.com/api/2/public/ticker")
+			if err != nil {
+				return err
+			}
 			defer resp.Body.Close()
 			var requestInput []HitBTC
 			body, err := ioutil.ReadAll(resp.Body)
 			error1 := json.Unmarshal(body, &requestInput)
 			if error1 != nil {
-				fmt.Println(error1)
 				return err
 			}
 			coin := HitBTC{}
@@ -190,7 +194,10 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		outputVar.WriteString("\n")
 
 		fmt.Println(outputVar.String())
-		outputToFile(outputVar.String(), newWriter)
+		err := outputToFile(outputVar.String(), newWriter)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 	return nil
 }
@@ -198,30 +205,30 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 func setupOutputFile() (file *os.File) {
 	file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	defer func() {
 		if err := file.Close(); err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 	}()
 	return file
 }
 
-func outputToFile(output string, writer *bufio.Writer) {
+func outputToFile(output string, writer *bufio.Writer) error {
 	_, err := writer.WriteString(output)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	writer.Flush()
+	return nil
 }
 
-func getJson(url string) *http.Response {
+func getJson(url string) (*http.Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
-	return resp
+	return resp, err
 }

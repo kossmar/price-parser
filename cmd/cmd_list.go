@@ -30,7 +30,7 @@ func coinListCmd(cmd *cobra.Command, args []string) error {
 	switch ApiFlag {
 	case "hitbtc":
 		outputVar.WriteString("\n")
-		resp := getJson("https://api.hitbtc.com/api/2/public/ticker")
+		resp, err := getJson("https://api.hitbtc.com/api/2/public/ticker")
 		defer resp.Body.Close()
 		var requestInput []HitBTC
 		body, err := ioutil.ReadAll(resp.Body)
@@ -49,7 +49,7 @@ func coinListCmd(cmd *cobra.Command, args []string) error {
 		outputVar.WriteString(formattedNameList)
 
 	case "poloniex":
-		resp := getJson("https://poloniex.com/public?command=returnTicker")
+		resp, err := getJson("https://poloniex.com/public?command=returnTicker")
 		defer resp.Body.Close()
 		var requestInput map[string]Poloniex
 		body, err := ioutil.ReadAll(resp.Body)
