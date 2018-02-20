@@ -29,6 +29,7 @@ func coinListCmd(cmd *cobra.Command, args []string) error {
 
 	switch ApiFlag {
 	case "hitbtc":
+		outputVar.WriteString("\n")
 		resp := getJson("https://api.hitbtc.com/api/2/public/ticker")
 		defer resp.Body.Close()
 		var requestInput []HitBTC
@@ -71,10 +72,10 @@ func coinListCmd(cmd *cobra.Command, args []string) error {
 
 func formatCoinList(nameList []string) string {
 	var buffer bytes.Buffer
-	var i int
+	i := 1
 	for _, name := range nameList {
 		buffer.WriteString(name + "   ")
-		if i%15 == 0 {
+		if i%15 == 0 && i != 1 || i == 15 {
 			buffer.WriteString("\n")
 		}
 		i++
