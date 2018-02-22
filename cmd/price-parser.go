@@ -161,6 +161,8 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			currentCoin = m
 		}
 
+		var jsonString string
+
 		switch {
 		case VerboseFlag && !JSONFlag:
 			var keys []string
@@ -169,37 +171,31 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				string := fmt.Sprint(k, ": ", currentCoin[k], "\n")
-				outputVar.WriteString(string)
+				jsonString += fmt.Sprint(k, ": ", currentCoin[k], "\n")
 			}
 		case VerboseFlag && JSONFlag:
 			coin, err := json.Marshal(currentCoin)
 			if err != nil {
 				return err
 			}
-			output := string(coin)
-			outputVar.WriteString(output)
+			jsonString += string(coin)
 		case JSONFlag && !VerboseFlag:
 			coin, err := json.Marshal(currentCoin["Last"])
 			if err != nil {
 				return err
 			}
-			output := string(coin)
-			outputVar.WriteString(output)
+			jsonString += string(coin)
 		default:
-			output := fmt.Sprint(currentCoin["Last"])
-			outputVar.WriteString(output)
+			jsonString += fmt.Sprint(currentCoin["Last"])
 		}
 
 		if TimeFlag == true {
-			timeElapsed := time.Since(start)
-			time := timeElapsed.Seconds()
-			output := fmt.Sprintf("%.1f seconds\n", time)
-			outputVar.WriteString(output)
+			timeElapsed := (time.Since(start)).Seconds()
+			jsonString += fmt.Sprintf("%.1f seconds\n", timeElapsed)
 		}
 
-		outputVar.WriteString("\n")
-
+		jsonString += ("\n")
+		outputVar.WriteString(jsonString)
 		fmt.Println(outputVar.String())
 		err1 := outputToFile(outputVar.String(), newWriter)
 		if err1 != nil {
