@@ -111,7 +111,14 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		var outputVar bytes.Buffer
 		outputVar.WriteString(coinString + "\n")
 
-		file, _ := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		_, err := setupOutputFile()
+		if err != nil {
+			return err
+		}
+		file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
 		newWriter := bufio.NewWriter(file)
 
 		switch ApiFlag {
@@ -168,14 +175,14 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		case VerboseFlag && JSONFlag:
 			coin, err := json.Marshal(currentCoin)
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
 			output := string(coin)
 			outputVar.WriteString(output)
 		case JSONFlag && !VerboseFlag:
 			coin, err := json.Marshal(currentCoin["Last"])
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
 			output := string(coin)
 			outputVar.WriteString(output)
@@ -194,18 +201,18 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		outputVar.WriteString("\n")
 
 		fmt.Println(outputVar.String())
-		err := outputToFile(outputVar.String(), newWriter)
-		if err != nil {
-			fmt.Println(err)
+		err1 := outputToFile(outputVar.String(), newWriter)
+		if err1 != nil {
+			return err1
 		}
 	}
 	return nil
 }
 
-func setupOutputFile() (file *os.File) {
+func setupOutputFile() (*os.File, error) {
 	file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 
 	defer func() {
@@ -213,7 +220,7 @@ func setupOutputFile() (file *os.File) {
 			fmt.Println(err)
 		}
 	}()
-	return file
+	return file, err
 }
 
 func outputToFile(output string, writer *bufio.Writer) error {
