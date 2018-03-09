@@ -1,7 +1,7 @@
 # price-parser
 An application created to stay up to date on cryptocurrency prices
 
-### Usage
+### Getting Started
 
 ##### Download
 ```
