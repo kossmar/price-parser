@@ -3,7 +3,7 @@ An application created to stay up to date on cryptocurrency prices
 
 ### Getting Started
 
-##### Download
+##### Installation
 ```
 go get -d github.com/kossmar/price-parser
 ```
