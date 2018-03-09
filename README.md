@@ -12,4 +12,8 @@ go get -d github.com/kossmar/price-parser
 | Flag             | Function                                                                     |
 |------------------|------------------------------------------------------------------------------|
 | -v               | vebose output                                                                |
-| --api            | specify ctryptocurrency service                                              |
+| -j               | json output                                                                  |
+| -T               | display time between outputs                                                 |
+| --api            | specify cryptocurrency service                                               |
+| --coin           | specify cryptocurrency                                                       |
+
