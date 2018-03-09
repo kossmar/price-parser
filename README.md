@@ -26,3 +26,4 @@ go get -d github.com/kossmar/price-parser
 ## Author
 
 * **Mar Koss**
+See also the list of [contributors](https://github.com/kossmar/price-parser/contributors) who participated in this project.
