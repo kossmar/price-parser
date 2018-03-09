@@ -55,20 +55,22 @@ var (
 		RunE:  parsePriceCmd,
 	}
 
-	cfgFile      string
-	coinString   string
-	VerboseFlag  bool
-	TimeFlag     bool
-	JSONFlag     bool
-	CoinNameFlag string
-	ApiFlag      string
+	cfgFile         string
+	coinString      string
+	VerboseFlag     bool
+	DisplayTimeFlag bool
+	DelayFlag       int
+	JSONFlag        bool
+	CoinNameFlag    string
+	ApiFlag         string
 )
 
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.AddCommand(ParsePriceCmd)
 	ParsePriceCmd.Flags().BoolVarP(&VerboseFlag, "verbose", "v", false, "verbose output")
-	ParsePriceCmd.Flags().BoolVarP(&TimeFlag, "time", "T", false, "show the time between prints")
+	ParsePriceCmd.Flags().BoolVarP(&DisplayTimeFlag, "display time", "T", false, "display the time between prints")
+	ParsePriceCmd.Flags().IntVarP(&DelayFlag, "delay", "d", 2, "specify time between prints")
 	ParsePriceCmd.Flags().BoolVarP(&JSONFlag, "json", "j", false, "print output in JSON format")
 	ParsePriceCmd.Flags().StringVar(&CoinNameFlag, "coin", "USDT_BTC", "specify coin")
 	ParsePriceCmd.Flags().StringVar(&ApiFlag, "api", "poloniex", "specify api")
@@ -107,7 +109,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 	for {
 
 		start := time.Now()
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * time.Duration(DelayFlag))
 		var outputVar bytes.Buffer
 		outputVar.WriteString(coinString + "\n")
 
@@ -189,7 +191,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			jsonString += fmt.Sprint(currentCoin["Last"])
 		}
 
-		if TimeFlag == true {
+		if DisplayTimeFlag == true {
 			timeElapsed := (time.Since(start)).Seconds()
 			jsonString += fmt.Sprintf("\n%.1f seconds\n", timeElapsed)
 		}
