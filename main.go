@@ -1,3 +1,5 @@
+// Copyright © 2018 NICHOLAS KOSS KOSSMAR2@GMAIL.COM
+
 package main
 
 import (
