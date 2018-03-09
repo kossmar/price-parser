@@ -191,7 +191,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 
 		if TimeFlag == true {
 			timeElapsed := (time.Since(start)).Seconds()
-			jsonString += fmt.Sprintf("%.1f seconds\n", timeElapsed)
+			jsonString += fmt.Sprintf("\n%.1f seconds\n", timeElapsed)
 		}
 
 		jsonString += ("\n")
