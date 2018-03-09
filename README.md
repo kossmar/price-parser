@@ -21,7 +21,7 @@ go get -d github.com/kossmar/price-parser
 ## Built With
 
 * [Cobra](https://github.com/spf13/cobra) - The CLI framework used
-* [Go](https://golang.org/doc/) - The language used
+* [Go]
 
 ## Author
 
