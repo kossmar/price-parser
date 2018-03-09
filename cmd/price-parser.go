@@ -55,32 +55,32 @@ var (
 		RunE:  parsePriceCmd,
 	}
 
-	cfgFile         string
-	coinString      string
-	VerboseFlag     bool
-	DisplayTimeFlag bool
-	DelayFlag       int
-	JSONFlag        bool
-	CoinNameFlag    string
-	ApiFlag         string
+	cfgContents     string
+	CoinName        string
+	FlagVerbose     bool
+	FlagDisplayTime bool
+	FlagDelay       int
+	FlagJSON        bool
+	FlagCoinName    string
+	FlagApi         string
 )
 
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.AddCommand(ParsePriceCmd)
-	ParsePriceCmd.Flags().BoolVarP(&VerboseFlag, "verbose", "v", false, "verbose output")
-	ParsePriceCmd.Flags().BoolVarP(&DisplayTimeFlag, "display time", "T", false, "display the time between prints")
-	ParsePriceCmd.Flags().IntVarP(&DelayFlag, "delay", "d", 2, "specify time between prints")
-	ParsePriceCmd.Flags().BoolVarP(&JSONFlag, "json", "j", false, "print output in JSON format")
-	ParsePriceCmd.Flags().StringVar(&CoinNameFlag, "coin", "USDT_BTC", "specify coin")
-	ParsePriceCmd.Flags().StringVar(&ApiFlag, "api", "poloniex", "specify api")
-	ParsePriceCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.price-parser.yaml)")
+	ParsePriceCmd.Flags().BoolVarP(&FlagVerbose, "verbose", "v", false, "verbose output")
+	ParsePriceCmd.Flags().BoolVarP(&FlagDisplayTime, "display time", "T", false, "display the time between prints")
+	ParsePriceCmd.Flags().IntVarP(&FlagDelay, "delay", "d", 2, "specify time between prints")
+	ParsePriceCmd.Flags().BoolVarP(&FlagJSON, "json", "j", false, "print output in JSON format")
+	ParsePriceCmd.Flags().StringVar(&FlagCoinName, "coin", "USDT_BTC", "specify coin")
+	ParsePriceCmd.Flags().StringVar(&FlagApi, "api", "poloniex", "specify api")
+	ParsePriceCmd.PersistentFlags().StringVar(&cfgContents, "config", "", "config file (default is $HOME/.price-parser.yaml)")
 	ParsePriceCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
+	if cfgContents != "" {
+		viper.SetConfigFile(cfgContents)
 	} else {
 		home, err := homedir.Dir()
 		if err != nil {
@@ -96,22 +96,22 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
-	if ApiFlag == "hitbtc" {
-		CoinNameFlag = "BTCUSD"
+	if FlagApi == "hitbtc" {
+		FlagCoinName = "BTCUSD"
 	}
 }
 
 func parsePriceCmd(cmd *cobra.Command, args []string) error {
 
-	coinString = CoinNameFlag
+	CoinName = FlagCoinName
 	var currentCoin map[string]interface{}
 
 	for {
 
 		start := time.Now()
-		time.Sleep(time.Second * time.Duration(DelayFlag))
+		time.Sleep(time.Second * time.Duration(FlagDelay))
 		var outputVar bytes.Buffer
-		outputVar.WriteString(coinString + "\n")
+		outputVar.WriteString(CoinName + "\n")
 
 		_, err := setupOutputFile()
 		if err != nil {
@@ -123,7 +123,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		}
 		newWriter := bufio.NewWriter(file)
 
-		switch ApiFlag {
+		switch FlagApi {
 		case "poloniex":
 			resp, err := getJson("https://poloniex.com/public?command=returnTicker")
 			if err != nil {
@@ -136,7 +136,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			if error1 != nil {
 				return err
 			}
-			s := structs.New(requestInput[coinString])
+			s := structs.New(requestInput[CoinName])
 			m := s.Map()
 			currentCoin = m
 
@@ -154,7 +154,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			}
 			coin := HitBTC{}
 			for _, elem := range requestInput {
-				if elem.Symbol == coinString {
+				if elem.Symbol == CoinName {
 					coin = elem
 				}
 			}
@@ -166,7 +166,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		var jsonString string
 
 		switch {
-		case VerboseFlag && !JSONFlag:
+		case FlagVerbose && !FlagJSON:
 			var keys []string
 			for k := range currentCoin {
 				keys = append(keys, k)
@@ -175,13 +175,13 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			for _, k := range keys {
 				jsonString += fmt.Sprint(k, ": ", currentCoin[k], "\n")
 			}
-		case VerboseFlag && JSONFlag:
+		case FlagVerbose && FlagJSON:
 			coin, err := json.Marshal(currentCoin)
 			if err != nil {
 				return err
 			}
 			jsonString += string(coin)
-		case JSONFlag && !VerboseFlag:
+		case FlagJSON && !FlagVerbose:
 			coin, err := json.Marshal(currentCoin["Last"])
 			if err != nil {
 				return err
@@ -191,7 +191,7 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 			jsonString += fmt.Sprint(currentCoin["Last"])
 		}
 
-		if DisplayTimeFlag == true {
+		if FlagDisplayTime == true {
 			timeElapsed := (time.Since(start)).Seconds()
 			jsonString += fmt.Sprintf("\n%.1f seconds\n", timeElapsed)
 		}

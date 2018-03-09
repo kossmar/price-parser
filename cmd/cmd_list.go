@@ -20,14 +20,14 @@ var (
 
 func init() {
 	RootCmd.AddCommand(CoinListCmd)
-	CoinListCmd.Flags().StringVar(&ApiFlag, "api", "poloniex", "specify api")
+	CoinListCmd.Flags().StringVar(&FlagApi, "api", "poloniex", "specify api")
 }
 
 func coinListCmd(cmd *cobra.Command, args []string) error {
 
 	var outputVar bytes.Buffer
 
-	switch ApiFlag {
+	switch FlagApi {
 	case "hitbtc":
 		outputVar.WriteString("\n")
 		resp, err := getJson("https://api.hitbtc.com/api/2/public/ticker")
