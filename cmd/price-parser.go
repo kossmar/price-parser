@@ -21,14 +21,14 @@ import (
 type Poloniex struct {
 	Id            int    `json: "id"`
 	Last          string `json: "last"`
-	LowestAsk     string `json: "lowestAsk"`
-	HighestBid    string `json: "highestBid"`
-	PercentChange string `json: "percentChange"`
-	BaseVolume    string `json: "baseVolume"`
-	QuoteVolume   string `json: "quoteVolume"`
-	IsFrozen      string `json: "isFrozen"`
-	High24hr      string `json: "high24hr"`
-	Low24hr       string `json: "low24hr"`
+	LowestAsk     string `json: "lowest_Ask"`
+	HighestBid    string `json: "highest_Bid"`
+	PercentChange string `json: "percent_Change"`
+	BaseVolume    string `json: "base_Volume"`
+	QuoteVolume   string `json: "quote_Volume"`
+	IsFrozen      string `json: "is_Frozen"`
+	High24hr      string `json: "high_24hr"`
+	Low24hr       string `json: "low_24hr"`
 }
 
 type HitBTC struct {
@@ -39,7 +39,7 @@ type HitBTC struct {
 	Low         string `json: "low"`
 	High        string `json: "high"`
 	Volume      string `json: "volume"`
-	VolumeQuote string `json: "volumeQuote"`
+	VolumeQuote string `json: "volume_Quote"`
 	Timestamp   string `json: "timestamp"`
 	Symbol      string `json: "symbol"`
 }
