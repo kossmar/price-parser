@@ -27,3 +27,15 @@ go get -d github.com/kossmar/price-parser
 
 * **Mar Koss**  
 See also the list of [contributors](https://github.com/kossmar/price-parser/contributors) who participated in this project.
+
+## Contributing
+
+1. Fork it
+2. Create your feature branch (git checkout -b my-new-feature)
+3. Commit your changes (git commit -am 'Add some feature')
+4. Push to the branch (git push origin my-new-feature)
+5. Create new Pull Request
+
+## License
+
+price-parser is released under the Apache 2.0 license.
