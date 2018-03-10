@@ -14,6 +14,7 @@ go get -d github.com/kossmar/price-parser
 |------------------|------------------------------------------------------------------------------|
 | -v               | vebose output                                                                |
 | -j               | json output                                                                  |
+| -d               | specifiy time between outputs                                                |
 | -T               | display time between outputs                                                 |
 | --api            | specify cryptocurrency service                                               |
 | --coin           | specify cryptocurrency                                                       |
