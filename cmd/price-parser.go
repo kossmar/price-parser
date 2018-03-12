@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"os/user"
 	// "strconv"
 	"sort"
 	"time"
@@ -113,11 +115,18 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 		var outputVar bytes.Buffer
 		outputVar.WriteString(CoinName + "\n")
 
-		_, err := setupOutputFile()
+		usr, err := user.Current()
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
-		file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		dir := usr.HomeDir + "/Documents/testData"
+
+		_, errr := setupOutputFile(dir)
+		if err != nil {
+			return errr
+		}
+
+		file, err := os.OpenFile(dir, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return err
 		}
@@ -207,8 +216,8 @@ func parsePriceCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func setupOutputFile() (*os.File, error) {
-	file, err := os.OpenFile("/Users/spinkringle/Documents/datazz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+func setupOutputFile(outputPath string) (*os.File, error) {
+	file, err := os.OpenFile(outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
